@@ -1,0 +1,17 @@
+# Downloaded and prepared data. Everything here is fetched by
+# scripts/download_data.py and scripts/prepare_data.py.
+data/
+genome/
+models/
+
+# Environment
+.venv/
+__pycache__/
+*.pyc
+
+# Papers, not ours to redistribute
+*.pdf
+
+# Executed notebooks are kept, but strip nothing else
+.ipynb_checkpoints/
+.DS_Store

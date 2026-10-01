@@ -1,0 +1,16 @@
+[project]
+name = "isn-school-2026"
+version = "0.1.0"
+description = "ISN Neurochemistry School 2026 - genomics practicals (Drosophila, ATAC, CREsted)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "crested[motif]>=1.10.0",
+    "ipykernel>=7.3.0",
+    "jupyterlab>=4.6.4",
+    "matplotlib>=3.11.2",
+    "pandas>=3.0.6",
+    "pybigwig>=0.3.26",
+    "scanpy>=1.12.4",
+    "seaborn>=0.13.2",
+    "torch>=2.14.0",
+]
