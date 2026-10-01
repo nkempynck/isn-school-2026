@@ -16,8 +16,8 @@ You need a Google account. Nothing is installed on your own computer.
 
 | | |
 |---|---|
-| **Practical 5**: public single-cell RNA and ATAC data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aertslab/isn-school-2026/blob/main/notebooks/practicals/05_public_atac.ipynb) |
-| **Practical 6**: enhancer modelling with CREsted | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aertslab/isn-school-2026/blob/main/notebooks/practicals/06_crested_deepflybrain.ipynb) |
+| **Practical 5**: public single-cell RNA and ATAC data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/practicals/05_public_atac.ipynb) |
+| **Practical 6**: enhancer modelling with CREsted | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/practicals/06_crested_deepflybrain.ipynb) |
 
 Two things that are normal and not your fault:
 
