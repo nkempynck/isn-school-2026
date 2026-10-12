@@ -157,6 +157,45 @@ def _streaming_works(url: str) -> bool:
         os.close(devnull)
 
 
+def _resolve_tracks(entries: dict, stream: bool, sizes: dict | None = None) -> dict:
+    """Decide, per track, whether to read it over the network or fetch it.
+
+    `entries` maps a name to (url, local path). The order of preference is:
+
+    1. a copy already on this machine, so nothing is repeated
+    2. the USB stick, if ISN_USB is set
+    3. streaming, which for a bigwig means a few range requests per locus
+       instead of tens or hundreds of megabytes
+    4. downloading, if streaming does not work here
+
+    Whether streaming works is checked once per call rather than per file.
+    """
+    have = {n: p for n, (_, p) in entries.items() if p.exists() and p.stat().st_size > 0}
+    missing = [n for n in entries if n not in have]
+
+    use_stream = False
+    if missing and stream and _usb_root() is None:
+        use_stream = _streaming_works(entries[missing[0]][0])
+        if use_stream:
+            print(f"  reading {len(missing)} track(s) over the network, not downloading")
+        else:
+            mb = sum((sizes or {}).get(n, 0) for n in missing)
+            extra = f", about {mb} MB" if mb else ""
+            print(f"  cannot read over the network here, downloading instead{extra}")
+
+    out = {}
+    for name, (url, path) in entries.items():
+        if name in have:
+            print(f"  already here: {path.name} ({path.stat().st_size / 1e6:.1f} MB)")
+            out[name] = path
+        elif use_stream:
+            out[name] = url
+        else:
+            out[name] = fetch(url, path,
+                              (sizes or {}).get(name, 0) * 1_000_000 or None)
+    return out
+
+
 def janssens_adult_bigwigs(cell_types=None, stream: bool = True):
     """Per-cell-type accessibility tracks, adult brain.
 
@@ -166,41 +205,18 @@ def janssens_adult_bigwigs(cell_types=None, stream: bool = True):
     Each file is about 58 MB, and the practical only ever looks at a few loci in
     them, so by default they are read over the network rather than downloaded.
     That turns 182 MB of downloading into a few hundred kilobytes of range
-    requests. The order of preference is:
-
-    1. a copy already on this machine, so nothing is repeated
-    2. the USB stick, if ISN_USB is set
-    3. streaming from the portal
-    4. downloading, if streaming does not work here
+    requests. See `_resolve_tracks` for the order of preference.
 
     Pass `stream=False` to force the download, which is what you want if you are
     about to go offline.
     """
     cell_types = cell_types or PRACTICAL5_CELL_TYPES
     print("Janssens et al. 2022 - adult brain scATAC bigwigs")
-
-    local = {ct: RAW / "janssens_adult_bw" / f"{ct}.bw" for ct in cell_types}
-    have = {ct: p for ct, p in local.items() if p.exists() and p.stat().st_size > 0}
-
-    missing = [ct for ct in cell_types if ct not in have]
-    use_stream = False
-    if missing and stream and _usb_root() is None:
-        use_stream = _streaming_works(f"{ADULT_BIGWIG}/{missing[0]}.bw")
-        if use_stream:
-            print(f"  reading {len(missing)} track(s) over the network, not downloading")
-        else:
-            print("  cannot read over the network here, downloading instead")
-
-    out = {}
-    for ct in cell_types:
-        if ct in have:
-            print(f"  already here: {ct}.bw ({have[ct].stat().st_size / 1e6:.1f} MB)")
-            out[ct] = have[ct]
-        elif use_stream:
-            out[ct] = f"{ADULT_BIGWIG}/{ct}.bw"
-        else:
-            out[ct] = fetch(f"{ADULT_BIGWIG}/{ct}.bw", local[ct])
-    return out
+    return _resolve_tracks(
+        {ct: (f"{ADULT_BIGWIG}/{ct}.bw", RAW / "janssens_adult_bw" / f"{ct}.bw")
+         for ct in cell_types},
+        stream,
+    )
 
 
 def janssens_adult_peaks(cell_types=None) -> dict[str, Path]:
@@ -406,27 +422,33 @@ EMBRYO_SIZES_MB = {
 }
 
 
-def dickmanken_embryo_bigwigs(cell_types=("Neuronal", "Glia")) -> dict[str, Path]:
-    """Per-cell-type embryo accessibility tracks. Large: 49 to 343 MB each.
+EMBRYO_CELL_TYPES = tuple(EMBRYO_SIZES_MB)
+
+
+def dickmanken_embryo_bigwigs(cell_types=("Neuronal", "Glia"), stream: bool = True):
+    """Per-cell-type embryo accessibility tracks, the data behind Embryo10x.
 
     Keys are the Embryo10x model's class names, so predictions and tracks line
     up even where the server spells a name differently.
 
+    These files are large, 49 to 343 MB each and about 2.4 GB for all twenty,
+    which used to make them impractical for a course. They are read over the
+    network instead, so asking for all twenty costs no more than asking for two.
+    Pass `cell_types=EMBRYO_CELL_TYPES` for the lot, or `stream=False` to force
+    a download.
+
     Note this is a single timepoint (16-20 h AEL), not a developmental series.
     For a series within one dataset, use `janssens_devel_bigwigs`.
     """
+    cell_types = list(cell_types)
     print("Dickmanken et al. 2026 - embryo scATAC bigwigs (16-20 h AEL)")
-    total = sum(EMBRYO_SIZES_MB.get(ct, 0) for ct in cell_types)
-    print(f"  {len(cell_types)} tracks, about {total} MB in total")
-    out = {}
-    for ct in cell_types:
-        remote = EMBRYO_FILE_NAME.get(ct, ct)
-        out[ct] = fetch(
-            f"{EMBRYO_BW}/{remote}.bw",
-            RAW / "dickmanken_embryo_bw" / f"{ct}.bw",
-            EMBRYO_SIZES_MB.get(ct, 0) * 1_000_000 or None,
-        )
-    return out
+    return _resolve_tracks(
+        {ct: (f"{EMBRYO_BW}/{EMBRYO_FILE_NAME.get(ct, ct)}.bw",
+              RAW / "dickmanken_embryo_bw" / f"{ct}.bw")
+         for ct in cell_types},
+        stream,
+        EMBRYO_SIZES_MB,
+    )
 
 
 if __name__ == "__main__":

@@ -18,13 +18,30 @@ import pyBigWig
 from .genes import gene_window, genes_in_window
 
 
+def _match_chrom(available, chrom: str) -> str | None:
+    """Find this chromosome under whichever name the file happens to use.
+
+    The same chromosome is written two ways in the wild. UCSC and the Janssens
+    tracks say `chr3R`; FlyBase, Ensembl and the Dickmanken embryo tracks say
+    `3R`. A project that plots both together would otherwise fail on whichever
+    one it met second, with an error that looks like a missing chromosome
+    rather than a naming difference.
+    """
+    if chrom in available:
+        return chrom
+    alt = chrom[3:] if chrom.startswith("chr") else f"chr{chrom}"
+    return alt if alt in available else None
+
+
 def coverage(bigwig: str | Path, chrom: str, start: int, end: int, bins: int = 800):
     """Average signal in each of `bins` equal slices of the window."""
     with pyBigWig.open(str(bigwig)) as bw:
-        if chrom not in bw.chroms():
-            raise KeyError(f"{Path(bigwig).name} has no chromosome '{chrom}'. "
+        name = _match_chrom(bw.chroms(), chrom)
+        if name is None:
+            raise KeyError(f"{Path(bigwig).name} has no chromosome '{chrom}', "
+                           f"under that name or without the 'chr'. "
                            f"It has e.g. {list(bw.chroms())[:5]}")
-        values = bw.stats(chrom, start, end, nBins=bins, type="mean")
+        values = bw.stats(name, start, end, nBins=bins, type="mean")
     return np.array([0.0 if v is None else v for v in values])
 
 
