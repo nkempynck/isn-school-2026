@@ -87,10 +87,10 @@ def make_fca_brain_h5ad(overwrite: bool = False) -> Path:
     if _try_mirror(DEST):
         return DEST
     if not SOURCE.exists():
-        raise FileNotFoundError(
-            f"{SOURCE} not found.\n"
-            f"  Run: from scripts.download_data import fca_head; fca_head()"
-        )
+        # Only now is the 2.5 GB original actually needed.
+        from .download_data import fca_head
+
+        fca_head()
 
     print(f"Preparing {DEST.name} from {SOURCE.name}")
     with h5py.File(SOURCE, "r") as f:
@@ -161,10 +161,9 @@ def make_larval_h5ad(overwrite: bool = False) -> Path:
     if _try_mirror(LARVAL_DEST):
         return LARVAL_DEST
     if not LARVAL_SOURCE.exists():
-        raise FileNotFoundError(
-            f"{LARVAL_SOURCE} not found.\n"
-            f"  Run: from scripts.download_data import larval_brain_loom; larval_brain_loom()"
-        )
+        from .download_data import larval_brain_loom
+
+        larval_brain_loom()
 
     print(f"Preparing {LARVAL_DEST.name} from {LARVAL_SOURCE.name}")
     with h5py.File(LARVAL_SOURCE, "r") as f:
