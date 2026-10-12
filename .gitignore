@@ -15,3 +15,6 @@ __pycache__/
 # Executed notebooks are kept, but strip nothing else
 .ipynb_checkpoints/
 .DS_Store
+
+# Internal handover notes, not for participants
+CLAUDE.md
