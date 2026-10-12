@@ -37,7 +37,7 @@ UCSC = "https://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips"
 # is the single slowest download in the practicals. Anything missing from the
 # mirror falls back to the original source automatically.
 MIRROR = os.environ.get(
-    "ISN_MIRROR", "https://resources.aertslab.org/isn_school_2026"
+    "ISN_MIRROR", "https://resources.aertslab.org/workshops/isn_course_oct2026"
 ).rstrip("/")
 
 
@@ -71,6 +71,17 @@ def fetch(url: str, dest: Path, expected_bytes: int | None = None) -> Path:
     try:
         with urllib.request.urlopen(url, timeout=120) as r, open(tmp, "wb") as fh:
             shutil.copyfileobj(r, fh, length=1024 * 512)
+            declared = r.headers.get("Content-Length")
+        # A connection that drops midway still leaves a readable file, so the
+        # only way to notice is to compare what arrived against what the server
+        # said it was sending.
+        if declared is not None and tmp.stat().st_size != int(declared):
+            got, want = tmp.stat().st_size, int(declared)
+            tmp.unlink(missing_ok=True)
+            raise IOError(
+                f"{dest.name} arrived incomplete: {got:,} of {want:,} bytes. "
+                f"The connection probably dropped. Run the cell again."
+            )
     except urllib.error.HTTPError as err:
         tmp.unlink(missing_ok=True)
         if err.code == 404:
@@ -110,14 +121,86 @@ PEAK_NAME = {
 NO_PEAK_FILE = {"T4_a_b", "T4_c_d", "T5_a_b", "T5_c_d"}
 
 
-def janssens_adult_bigwigs(cell_types=None) -> dict[str, Path]:
-    """Per-cell-type accessibility tracks, adult brain. ~58 MB each."""
+def _streaming_works(url: str) -> bool:
+    """Can pyBigWig read this file over the network, without downloading it?
+
+    The bigwig format is indexed, so a reader can ask the server for just the
+    bytes covering one locus instead of fetching the whole file. That needs the
+    server to answer HTTP range requests, which the flybrain portal does, and it
+    needs nothing in between to interfere. Some institutional proxies strip
+    range requests and return the whole file, which breaks the reader.
+
+    Checked once per session rather than per file.
+    """
+    try:
+        import pyBigWig
+    except ImportError:
+        return False
+
+    # When this fails, the C library underneath pyBigWig writes its own errors
+    # straight to file descriptor 2, where Python cannot intercept them. They
+    # look alarming and are followed by a perfectly good fallback, so they are
+    # silenced for the duration of the check.
+    saved = os.dup(2)
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull, 2)
+        bw = pyBigWig.open(url)
+        ok = bool(bw.chroms())
+        bw.close()
+        return ok
+    except Exception:
+        return False
+    finally:
+        os.dup2(saved, 2)
+        os.close(saved)
+        os.close(devnull)
+
+
+def janssens_adult_bigwigs(cell_types=None, stream: bool = True):
+    """Per-cell-type accessibility tracks, adult brain.
+
+    Returns a dict of cell type -> URL or local path, either of which can be
+    handed straight to `pyBigWig.open` or to `scripts.plots.plot_tracks`.
+
+    Each file is about 58 MB, and the practical only ever looks at a few loci in
+    them, so by default they are read over the network rather than downloaded.
+    That turns 182 MB of downloading into a few hundred kilobytes of range
+    requests. The order of preference is:
+
+    1. a copy already on this machine, so nothing is repeated
+    2. the USB stick, if ISN_USB is set
+    3. streaming from the portal
+    4. downloading, if streaming does not work here
+
+    Pass `stream=False` to force the download, which is what you want if you are
+    about to go offline.
+    """
     cell_types = cell_types or PRACTICAL5_CELL_TYPES
     print("Janssens et al. 2022 - adult brain scATAC bigwigs")
-    return {
-        ct: fetch(f"{ADULT_BIGWIG}/{ct}.bw", RAW / "janssens_adult_bw" / f"{ct}.bw")
-        for ct in cell_types
-    }
+
+    local = {ct: RAW / "janssens_adult_bw" / f"{ct}.bw" for ct in cell_types}
+    have = {ct: p for ct, p in local.items() if p.exists() and p.stat().st_size > 0}
+
+    missing = [ct for ct in cell_types if ct not in have]
+    use_stream = False
+    if missing and stream and _usb_root() is None:
+        use_stream = _streaming_works(f"{ADULT_BIGWIG}/{missing[0]}.bw")
+        if use_stream:
+            print(f"  reading {len(missing)} track(s) over the network, not downloading")
+        else:
+            print("  cannot read over the network here, downloading instead")
+
+    out = {}
+    for ct in cell_types:
+        if ct in have:
+            print(f"  already here: {ct}.bw ({have[ct].stat().st_size / 1e6:.1f} MB)")
+            out[ct] = have[ct]
+        elif use_stream:
+            out[ct] = f"{ADULT_BIGWIG}/{ct}.bw"
+        else:
+            out[ct] = fetch(f"{ADULT_BIGWIG}/{ct}.bw", local[ct])
+    return out
 
 
 def janssens_adult_peaks(cell_types=None) -> dict[str, Path]:
@@ -265,16 +348,31 @@ def dm6_genome() -> Path:
     if fa.exists():
         print(f"  already here: dm6.fa ({fa.stat().st_size / 1e6:.0f} MB)")
         return fa
-    try:
-        gz = fetch(f"{MIRROR}/dm6.fa.gz", GENOME / "dm6.fa.gz")
-    except Exception:
-        gz = fetch(f"{UCSC}/dm6.fa.gz", GENOME / "dm6.fa.gz")
-    print("  unzipping dm6.fa.gz")
-    with gzip.open(gz, "rb") as src, open(fa, "wb") as dst:
-        shutil.copyfileobj(src, dst, length=1024 * 512)
-    gz.unlink()
-    print(f"    done: {fa.stat().st_size / 1e6:.0f} MB")
-    return fa
+
+    # The archive is unzipped to a temporary name and only moved into place once
+    # it is complete. Without that, a truncated download leaves a partial
+    # dm6.fa, which the check above would accept on the next run: the practical
+    # would then be reading a genome that silently stops part way through.
+    gz = GENOME / "dm6.fa.gz"
+    part = GENOME / "dm6.fa.part"
+    last_error = None
+    for source in (f"{MIRROR}/dm6.fa.gz", f"{UCSC}/dm6.fa.gz"):
+        try:
+            fetch(source, gz)
+            print("  unzipping dm6.fa.gz")
+            with gzip.open(gz, "rb") as src, open(part, "wb") as dst:
+                shutil.copyfileobj(src, dst, length=1024 * 512)
+            part.replace(fa)
+            gz.unlink(missing_ok=True)
+            print(f"    done: {fa.stat().st_size / 1e6:.0f} MB")
+            return fa
+        except Exception as err:
+            last_error = err
+            part.unlink(missing_ok=True)
+            gz.unlink(missing_ok=True)
+            print(f"  {source} did not work ({type(err).__name__}: {err})")
+
+    raise RuntimeError(f"Could not get the dm6 genome. Last error: {last_error}")
 
 
 # --------------------------- Dickmanken et al. 2026 embryo scATAC (GSE293575)
