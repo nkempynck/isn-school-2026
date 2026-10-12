@@ -4,6 +4,9 @@ data/
 genome/
 models/
 
+# Files staged for the course mirror. Built from the above, never committed.
+upload/
+
 # Environment
 .venv/
 __pycache__/
