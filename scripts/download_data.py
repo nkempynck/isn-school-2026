@@ -32,6 +32,14 @@ FLYBRAIN = "https://flybrain.aertslab.org/downloads"
 GEO_MERRILL = "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE197nnn/GSE197760/suppl"
 UCSC = "https://hgdownload.soe.ucsc.edu/goldenPath/dm6/bigZips"
 
+# Some files are also kept on the lab's own server, because the original host is
+# slow. UCSC serves dm6 at roughly 1.7 MB/s against 8 MB/s here, and the genome
+# is the single slowest download in the practicals. Anything missing from the
+# mirror falls back to the original source automatically.
+MIRROR = os.environ.get(
+    "ISN_MIRROR", "https://resources.aertslab.org/isn_school_2026"
+).rstrip("/")
+
 
 def _usb_root() -> Path | None:
     p = os.environ.get("ISN_USB")
@@ -257,7 +265,10 @@ def dm6_genome() -> Path:
     if fa.exists():
         print(f"  already here: dm6.fa ({fa.stat().st_size / 1e6:.0f} MB)")
         return fa
-    gz = fetch(f"{UCSC}/dm6.fa.gz", GENOME / "dm6.fa.gz")
+    try:
+        gz = fetch(f"{MIRROR}/dm6.fa.gz", GENOME / "dm6.fa.gz")
+    except Exception:
+        gz = fetch(f"{UCSC}/dm6.fa.gz", GENOME / "dm6.fa.gz")
     print("  unzipping dm6.fa.gz")
     with gzip.open(gz, "rb") as src, open(fa, "wb") as dst:
         shutil.copyfileobj(src, dst, length=1024 * 512)

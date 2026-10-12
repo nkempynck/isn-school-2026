@@ -55,9 +55,7 @@ DEST = ROOT / "data" / "processed" / "fca_brain.h5ad"
 # Upload fca_brain.h5ad and larval_brain.h5ad to this directory before the
 # school. Point ISN_PREPARED_URL somewhere else, or set it empty, to build
 # everything from the authors' original files instead.
-PREPARED_URL = os.environ.get(
-    "ISN_PREPARED_URL", "https://resources.aertslab.org/isn_school_2026"
-).rstrip("/")
+from .download_data import MIRROR as PREPARED_URL
 
 
 def _try_mirror(dest: Path) -> bool:
