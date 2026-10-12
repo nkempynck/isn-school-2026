@@ -101,6 +101,45 @@ def _trim(pwm: np.ndarray, min_bits: float = 0.4) -> np.ndarray:
     return pwm[keep[0]: keep[-1] + 1]
 
 
+def fimo_scan(sequence: str, tfs=None, p_value: float = 1e-3,
+              motif_ids: dict | None = None) -> pd.DataFrame:
+    """The same question asked with FIMO, the standard tool.
+
+    `scan` above scores a match as a fraction of the range between the worst and
+    best possible score for that matrix. That is easy to explain but it is not
+    calibrated: the number means something different for every motif, and there
+    is no way to say how often a score that high would arise by chance.
+
+    FIMO, from the MEME suite, builds the null distribution of scores for each
+    matrix and reports a p-value per hit, so one threshold means the same thing
+    for every motif. It is used here through `memelite`, a fast reimplementation
+    that `crested[motif]` already installs, so there is nothing extra to fetch.
+
+    The two disagree on real data, and the disagreement is instructive rather
+    than a bug. See section 6 of Practical 6.
+
+    Returns one row per hit: tf, start, end, strand, score, p_value.
+    """
+    from memelite import fimo
+
+    motif_ids = motif_ids or FIGURE4_MOTIFS
+    tfs = list(tfs) if tfs is not None else list(motif_ids)
+    db = _load_meme()
+    # memelite wants each matrix as (alphabet, width) and the sequence as
+    # (n_sequences, alphabet, length), which is the transpose of what we use.
+    motifs = {tf: _trim(db[motif_ids[tf]]).T for tf in tfs}
+    encoded = _one_hot(sequence).T[None].astype("float32")
+
+    found = fimo(motifs, encoded, threshold=p_value, dim=1)
+    if not len(found) or not len(found[0]):
+        return pd.DataFrame(columns=["tf", "start", "end", "strand", "score", "p_value"])
+
+    hits = found[0].rename(columns={"motif_name": "tf", "p-value": "p_value"})
+    hits["tf"] = hits["tf"].astype(str)
+    return (hits[["tf", "start", "end", "strand", "score", "p_value"]]
+            .sort_values("start").reset_index(drop=True))
+
+
 def scan(sequence: str, tfs=None, threshold: float = 0.82,
          motif_ids: dict | None = None) -> pd.DataFrame:
     """Where in this sequence does each transcription factor have a site?
