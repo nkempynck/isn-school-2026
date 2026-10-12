@@ -8,8 +8,14 @@ were never annotated.
 
 Source: the "Topic - Cell Type correspondence" legend on
 https://flybrain.aertslab.org (Janssens et al. 2022, Extended Data Fig. 10).
-Read on 2026-09-22. 26 of the 81 topics are annotated; the rest are left as
-"not annotated" in the paper, and we keep them that way rather than guessing.
+Read on 2026-09-22. The rest are left as "not annotated" in the paper, and we
+keep them that way rather than guessing.
+
+Count the table rather than trusting a number written here: an earlier version
+of this docstring said 26 while the table held 25, and the notebook printed a
+third figure. Everything that reports a count now derives it from
+`len(TOPIC_CELL_TYPE)`. One topic may have been missed when the legend was read;
+adding it needs no change anywhere else.
 """
 
 TOPIC_CELL_TYPE = {
