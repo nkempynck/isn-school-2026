@@ -118,7 +118,9 @@ def plot_tracks(
         gax.plot([max(row.start, start), min(row.end, end)], [y, y], lw=3, color="#444444",
                  solid_capstyle="butt")
         gax.text((max(row.start, start) + min(row.end, end)) / 2, y + 0.25,
-                 f"{name} {'▶' if row.strand == '+' else '◀'}",
+                 # Plain ASCII for the strand: the triangle glyphs are missing
+                 # from Arial, so matplotlib warns and draws an empty box.
+                 f"{name} {'>' if row.strand == '+' else '<'}",
                  ha="center", va="bottom", fontsize=8)
     gax.set_ylim(-3.2, 1.0)
     gax.set_yticks([])
