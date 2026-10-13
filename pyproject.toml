@@ -12,5 +12,6 @@ dependencies = [
     "pybigwig>=0.3.26",
     "scanpy>=1.12.4",
     "seaborn>=0.13.2",
+    "tangermeme>=1.5.0",
     "torch>=2.14.0",
 ]
