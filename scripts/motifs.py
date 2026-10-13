@@ -101,6 +101,39 @@ def _trim(pwm: np.ndarray, min_bits: float = 0.4) -> np.ndarray:
     return pwm[keep[0]: keep[-1] + 1]
 
 
+def motifs_for(tf: str) -> list[str]:
+    """Every motif in the database annotated to this fly transcription factor.
+
+    The database ships a table mapping motifs to the factors that bind them,
+    which lets any fly factor be scanned for by name rather than only the
+    handful recorded in `FIGURE4_MOTIFS`. 672 motifs covering 295 factors can be
+    resolved this way, including `gcm` and `repo`.
+
+    The two files disagree on naming: the MEME file prefixes clustered motifs
+    with `metacluster_<n>.<m>.`, the annotation table does not, so the prefix is
+    stripped before matching. Without that only 247 of 1,368 resolve.
+    """
+    if "by_tf" not in _cache:
+        import re
+
+        import crested
+
+        _, annotation = crested.get_motif_db()
+        table = pd.read_csv(annotation, sep="\t").dropna(subset=["Fly_Direct_annot"])
+
+        stripped = {}
+        for key in _load_meme():
+            stripped.setdefault(re.sub(r"^metacluster_[0-9.]+\.", "", key), key)
+
+        index: dict[str, list[str]] = {}
+        for row in table.itertuples():
+            key = stripped.get(row.Motif_name)
+            if key is not None:
+                index.setdefault(row.Fly_Direct_annot, []).append(key)
+        _cache["by_tf"] = index
+    return _cache["by_tf"].get(tf, [])
+
+
 def fimo_scan(sequence: str, tfs=None, p_value: float = 1e-3,
               motif_ids: dict | None = None) -> pd.DataFrame:
     """The same question asked with FIMO, the standard tool.
@@ -125,9 +158,22 @@ def fimo_scan(sequence: str, tfs=None, p_value: float = 1e-3,
     motif_ids = motif_ids or FIGURE4_MOTIFS
     tfs = list(tfs) if tfs is not None else list(motif_ids)
     db = _load_meme()
+
+    # A factor may have several matrices in the database. All of them are
+    # scanned and the name is recovered afterwards from the part before the bar.
+    motifs = {}
+    for tf in tfs:
+        keys = [motif_ids[tf]] if tf in motif_ids else motifs_for(tf)
+        if not keys:
+            raise KeyError(
+                f"No motif in the database is annotated to the fly factor '{tf}'. "
+                f"Check the spelling against FlyBase; names are case-sensitive."
+            )
+        for n, key in enumerate(keys):
+            motifs[f"{tf}|{n}"] = _trim(db[key]).T
+
     # memelite wants each matrix as (alphabet, width) and the sequence as
     # (n_sequences, alphabet, length), which is the transpose of what we use.
-    motifs = {tf: _trim(db[motif_ids[tf]]).T for tf in tfs}
     encoded = _one_hot(sequence).T[None].astype("float32")
 
     found = fimo(motifs, encoded, threshold=p_value, dim=1)
@@ -135,7 +181,7 @@ def fimo_scan(sequence: str, tfs=None, p_value: float = 1e-3,
         return pd.DataFrame(columns=["tf", "start", "end", "strand", "score", "p_value"])
 
     hits = found[0].rename(columns={"motif_name": "tf", "p-value": "p_value"})
-    hits["tf"] = hits["tf"].astype(str)
+    hits["tf"] = hits["tf"].astype(str).str.split("|").str[0]
     return (hits[["tf", "start", "end", "strand", "score", "p_value"]]
             .sort_values("start").reset_index(drop=True))
 
