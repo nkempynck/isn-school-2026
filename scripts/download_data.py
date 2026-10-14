@@ -86,11 +86,18 @@ def fetch(url: str, dest: Path, expected_bytes: int | None = None) -> Path:
     except urllib.error.HTTPError as err:
         tmp.unlink(missing_ok=True)
         if err.code == 404:
+            # The portal is addressed by cell type name, so a 404 there is
+            # almost always a spelling mistake. The mirror is not, so the same
+            # hint would send a participant looking for a typo they never made.
+            hint = (
+                "  Ask the instructor: this file is prepared for the course and "
+                "is not available anywhere else."
+                if url.startswith(MIRROR)
+                else "  If you asked for a named cell type, check the spelling: "
+                "the portal's names are exact."
+            )
             raise FileNotFoundError(
-                f"The server does not have {dest.name}.\n"
-                f"  Tried: {url}\n"
-                f"  If you asked for a named cell type, check the spelling: the "
-                f"portal's names are exact."
+                f"The server does not have {dest.name}.\n  Tried: {url}\n{hint}"
             ) from None
         raise
     except Exception:
