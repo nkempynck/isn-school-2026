@@ -21,3 +21,8 @@ __pycache__/
 
 # Internal handover notes, not for participants
 CLAUDE.md
+
+# Instructor copies of the project notebooks: same analysis, with the answers
+# and teaching notes written in. The participants get the version in
+# notebooks/projects/, which poses the questions and leaves them open.
+notebooks/instructor/

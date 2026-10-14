@@ -353,6 +353,81 @@ def merrill_atac(which=None) -> dict[str, Path]:
     return out
 
 
+def merrill_bigwigs(stream: bool = True):
+    """The two accessibility tracks, dopaminergic and GABAergic.
+
+    Returns a dict ready for `scripts.plots.plot_tracks`. Like the fly brain
+    tracks these are read over the network by default rather than downloaded.
+
+    The two files are already normalised against each other: their `sumData`
+    totals are 1.9687e9 and 1.9734e9, 0.24 per cent apart, so peak heights can
+    be compared directly with no scaling. That is not true of every pair of
+    bigwigs and is worth checking before trusting a side-by-side plot.
+    """
+    print("Merrill et al. 2022 - TH vs GABA neuron bulk ATAC (GEO GSE197760)")
+    return _resolve_tracks(
+        {label: (f"{GEO_MERRILL}/{MERRILL_FILES[key][0]}",
+                 RAW / "merrill" / MERRILL_FILES[key][0])
+         for key, label in (("TH_bw", "TH (dopaminergic)"), ("GABA_bw", "GABA"))},
+        stream,
+        {"TH (dopaminergic)": 15, "GABA": 16},
+    )
+
+
+def merrill_differential() -> Path:
+    """The authors' own differential accessibility table, 5 MB gzipped.
+
+    80,590 regions, each already tested for a difference between the two cell
+    types with DESeq2 and annotated with its nearest gene by ChIPseeker. Read it
+    with `pd.read_csv(path, skiprows=1, low_memory=False)`: there is a one-line
+    comment above the header. Positive `log2FoldChange` means more open in
+    dopaminergic neurons.
+    """
+    name, size = MERRILL_FILES["differential"]
+    print("Merrill et al. 2022 - differential accessibility table")
+    return fetch(f"{GEO_MERRILL}/{name}", RAW / "merrill" / name, size)
+
+
+# --------------------------------- Pech et al. 2025 (eLife 98348, GSE228843)
+# Five fly models of familial Parkinsonism, whole-brain scRNA-seq of young
+# flies, plus human snRNA-seq. The group project uses the authors' own result
+# tables rather than the raw data: the 24 per-sample h5ads on GEO carry no cell
+# type annotations, so using them would mean clustering and annotating 75,000
+# cells, which is a week of work rather than an evening.
+
+ELIFE_PECH = "https://cdn.elifesciences.org/articles/98348"
+
+PECH_FILES = {
+    # Supplementary file 5: how deregulated each cell type is in each model.
+    "celltypes": ("elife-98348-supp5-v1.xlsx", 43_284),
+    # Supplementary file 7: differential expression, including a fly gene list
+    # ranked by how deregulated it is across all five models.
+    "genes": ("elife-98348-supp7-v1.xlsx", 11_632_233),
+}
+
+
+def pech_tables(which=None) -> dict[str, Path]:
+    """The Pech et al. 2025 supplementary tables, as local .xlsx paths.
+
+    Read them with `pd.read_excel`, which needs `openpyxl`.
+
+    Both sheets need tidying before use; the project notebook does it in the
+    open rather than hiding it here, because dealing with a spreadsheet laid
+    out for human eyes is most of what using published tables involves. The
+    two gotchas: in the cell type sheet the model columns are followed by
+    unnamed spacer columns and summary columns, and in the gene sheet the
+    column holding the gene names is called `Unnamed: 10`, because
+    `sorted by median` is a heading spanning the block rather than a column.
+    """
+    which = which or list(PECH_FILES)
+    print("Pech et al. 2025 - five fly Parkinsonism models (eLife 98348)")
+    out = {}
+    for key in which:
+        name, size = PECH_FILES[key]
+        out[key] = fetch(f"{ELIFE_PECH}/{name}", RAW / "pech" / name, size)
+    return out
+
+
 # ------------------------------------------------------------------ genome
 
 

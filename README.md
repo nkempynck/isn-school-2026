@@ -19,6 +19,19 @@ You need a Google account. Nothing is installed on your own computer.
 | **Practical 5**: public single-cell RNA and ATAC data | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/practicals/05_public_atac.ipynb) |
 | **Practical 6**: enhancer modelling with CREsted | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/practicals/06_crested_deepflybrain.ipynb) |
 
+### Group projects
+
+| | |
+|---|---|
+| **Which brain cells does Parkinson's disease hit first?** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
+
+Unlike the practicals, the project notebooks arrive without their results. You
+are meant to run them and work out what the answer is.
+
+Each group is given one of five fly models of Parkinsonism and answers the same
+questions about it. Nobody can answer the real question alone, so the five talks
+on Friday only add up together.
+
 Two things that are normal and not your fault:
 
 - after the install, Colab may show a **Restart session** button. Click it, then
@@ -41,6 +54,13 @@ Janssens et al. 2022.
 Embryo10x, and asks which cell type the sequence belongs to and which
 nucleotides the model used to decide. It ends on an enhancer that the authors
 tested in flies, where the answer is known in advance.
+
+**The Parkinson's project** asks which cells in the brain get into trouble first
+in Parkinson's disease, using five fly models of familial Parkinsonism from
+Pech et al. 2025, sequenced young, before anything has degenerated. Patients
+lose their sense of smell about a decade before any tremor, and the question is
+whether the fly shows the same thing. Each group takes one of the five disease
+genes, so the answer only appears when all five groups have presented.
 
 Everything runs on a CPU. No model is trained.
 
@@ -65,6 +85,7 @@ source by `scripts/download_data.py`, which prints each URL as it goes:
 - Janssens et al. 2022 fly brain scATAC, https://flybrain.aertslab.org and GEO GSE163697
 - Merrill et al. 2022 TH vs GABA ATAC, GEO GSE197760
 - Dickmanken et al. 2026 embryo scATAC, GEO GSE293575
+- Pech et al. 2025 fly Parkinsonism models, eLife 98348 and GEO GSE228843
 - dm6 genome, UCSC
 
 `scripts/prepare_data.py` reduces the 2.5 GB Fly Cell Atlas head file to a 42 MB
