@@ -23,11 +23,10 @@ You need a Google account. Nothing is installed on your own computer.
 
 | | |
 |---|---|
-| **Five fly models of Parkinsonism, and whether to believe them** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
+| **Which cell types change in fly models of Parkinsonism?** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
 
 Unlike the practicals, the project notebooks arrive without their results. You
-are meant to run them and work out what the answer is, and then work out how
-much of it you believe.
+run them and work the answer out yourself.
 
 Two things that are normal and not your fault:
 
@@ -57,10 +56,8 @@ carrying a mutation in the fly version of a human Parkinson's gene. For every
 cell type in the brain the authors counted how many genes changed, compared with
 how many you would expect from the number of cells they captured. Pick a model
 and ask which cell types come out on top, whether the dopaminergic neurons show
-anything, and which genes are involved. Then spend at least as long working out
-how much weight that measurement will bear: how many cells it rests on, whether
-the significance test separates anything, and what a single timepoint can and
-cannot tell you.
+anything, and which genes are involved. The five genes do not all give the same
+answer, and the differences are the interesting part.
 
 Everything runs on a CPU. No model is trained.
 
