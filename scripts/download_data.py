@@ -398,7 +398,12 @@ def merrill_differential() -> Path:
 ELIFE_PECH = "https://cdn.elifesciences.org/articles/98348"
 
 PECH_FILES = {
-    # Supplementary file 5: how deregulated each cell type is in each model.
+    # Supplementary file 3: how many cells of each cluster were captured, per
+    # genotype. This is what tells you whether a result rests on 90 cells or
+    # 900, and there are three separate control genotypes.
+    "counts": ("elife-98348-supp3-v1.xlsx", 65_919),
+    # Supplementary file 5: how deregulated each cell type is in each model,
+    # plus the authors' own confidence-interval call on a second sheet.
     "celltypes": ("elife-98348-supp5-v1.xlsx", 43_284),
     # Supplementary file 7: differential expression, including a fly gene list
     # ranked by how deregulated it is across all five models.

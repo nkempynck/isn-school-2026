@@ -23,14 +23,11 @@ You need a Google account. Nothing is installed on your own computer.
 
 | | |
 |---|---|
-| **Which brain cells does Parkinson's disease hit first?** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
+| **Five fly models of Parkinsonism, and whether to believe them** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
 
 Unlike the practicals, the project notebooks arrive without their results. You
-are meant to run them and work out what the answer is.
-
-Each group is given one of five fly models of Parkinsonism and answers the same
-questions about it. Nobody can answer the real question alone, so the five talks
-on Friday only add up together.
+are meant to run them and work out what the answer is, and then work out how
+much of it you believe.
 
 Two things that are normal and not your fault:
 
@@ -55,12 +52,15 @@ Embryo10x, and asks which cell type the sequence belongs to and which
 nucleotides the model used to decide. It ends on an enhancer that the authors
 tested in flies, where the answer is known in advance.
 
-**The Parkinson's project** asks which cells in the brain get into trouble first
-in Parkinson's disease, using five fly models of familial Parkinsonism from
-Pech et al. 2025, sequenced young, before anything has degenerated. Patients
-lose their sense of smell about a decade before any tremor, and the question is
-whether the fly shows the same thing. Each group takes one of the five disease
-genes, so the answer only appears when all five groups have presented.
+**The Parkinson's project** uses five fly lines from Pech et al. 2025, each
+carrying a mutation in the fly version of a human Parkinson's gene. For every
+cell type in the brain the authors counted how many genes changed, compared with
+how many you would expect from the number of cells they captured. Pick a model
+and ask which cell types come out on top, whether the dopaminergic neurons show
+anything, and which genes are involved. Then spend at least as long working out
+how much weight that measurement will bear: how many cells it rests on, whether
+the significance test separates anything, and what a single timepoint can and
+cannot tell you.
 
 Everything runs on a CPU. No model is trained.
 
