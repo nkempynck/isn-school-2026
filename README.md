@@ -23,10 +23,11 @@ You need a Google account. Nothing is installed on your own computer.
 
 | | |
 |---|---|
-| **Which cell types change in fly models of Parkinsonism?** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
+| **The fly brain in five models of Parkinson's disease** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nkempynck/isn-school-2026/blob/main/notebooks/projects/parkinsons.ipynb) |
 
-Unlike the practicals, the project notebooks arrive without their results. You
-run them and work the answer out yourself.
+The project notebook is not a set of exercises. It gives you the data, a few
+tools and one worked example, and then you choose a question and answer it
+yourselves. What you present is your question, your analysis and your answer.
 
 Two things that are normal and not your fault:
 
@@ -51,13 +52,12 @@ Embryo10x, and asks which cell type the sequence belongs to and which
 nucleotides the model used to decide. It ends on an enhancer that the authors
 tested in flies, where the answer is known in advance.
 
-**The Parkinson's project** uses five fly lines from Pech et al. 2025, each
-carrying a mutation in the fly version of a human Parkinson's gene. For every
-cell type in the brain the authors counted how many genes changed, compared with
-how many you would expect from the number of cells they captured. Pick a model
-and ask which cell types come out on top, whether the dopaminergic neurons show
-anything, and which genes are involved. The five genes do not all give the same
-answer, and the differences are the interesting part.
+**The Parkinson's project** gives you 32,493 single cells from the brains of
+young flies carrying one of five Parkinson's mutations, plus controls, with a
+cell type on every cell. Parkinson's kills dopaminergic neurons, but patients
+lose their sense of smell about a decade earlier, and these flies are young
+enough that nothing has degenerated yet. Which cells are already changing, and
+what is changing in them, is up to you to find out.
 
 Everything runs on a CPU. No model is trained.
 

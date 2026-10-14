@@ -26,6 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW = REPO_ROOT / "data" / "raw"
+PROCESSED = REPO_ROOT / "data" / "processed"
 GENOME = REPO_ROOT / "genome"
 
 FLYBRAIN = "https://flybrain.aertslab.org/downloads"
@@ -409,6 +410,24 @@ PECH_FILES = {
     # ranked by how deregulated it is across all five models.
     "genes": ("elife-98348-supp7-v1.xlsx", 11_632_233),
 }
+
+
+def pech_brain() -> Path:
+    """The five Parkinsonism models and their controls, as one annotated h5ad.
+
+    32,493 cells, 9,210 genes, 32 cell types, six genotypes. `.X` is
+    `normalize_total(1e4)` then `log1p`, the same convention as
+    `fca_brain.h5ad`, so it is ready for `sc.tl.rank_genes_groups`.
+
+    Built for this course from the 24 per-sample matrices in GEO GSE228843,
+    which carry no cell type labels. The labels come from co-clustering with
+    Davie et al. 2018 (GSE107451) and were kept only where the resulting counts
+    matched the paper's own supplementary file 3. `adata.uns["source"]` records
+    this, and `pech_brain_validation.tsv` on the mirror lists every cell type
+    with its error and whether it was kept.
+    """
+    print("Pech et al. 2025 - fly Parkinsonism models, annotated for this course")
+    return fetch(f"{MIRROR}/pech_brain.h5ad", PROCESSED / "pech_brain.h5ad")
 
 
 def pech_tables(which=None) -> dict[str, Path]:
