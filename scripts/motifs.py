@@ -21,11 +21,19 @@ import pandas as pd
 
 # The motifs used in Figure 4 of Janssens et al. 2022, which dissects two
 # enhancers. Fly names on the left; the database's motif id on the right.
-# Mef2 has no fly motif in the database, so its human orthologue is used; the
-# MADS-box consensus is the same, and the id spells it out: KCTAWAAATAGM.
+# Two of these are human matrices, for reasons given at each entry: the fly
+# database has no Mef2 motif at all, and its only Ey motif is the wrong one of
+# that factor's two binding modes.
 FIGURE4_MOTIFS = {
     "Mef2": "metacluster_179.4.taipale__MEF2A_DBD_KCTAWAAATAGM_repr",
-    "ey": "nitta__ey_TCCCCT20NCCC_KA_NTAATCGAATTAN_m1_c5",
+    # Ey is Pax6, which binds DNA through a paired domain and a homeodomain.
+    # The only fly `ey` entry in the database is a homeodomain-type site,
+    # TAATCGAATTA, and the site Figure 4 annotates in enh47 is the paired-domain
+    # one, TCACGCTTAATTAAGC. Scanning with the fly entry puts its best match at
+    # position 381, which carries 0.68x the average contribution: a site the
+    # model ignores. The human PAX6 matrix finds the real one at 332 at 3.14x.
+    # Same reasoning as Mef2 above, and the paired domain is conserved.
+    "ey": "metacluster_154.2.taipale_cyt_meth__PAX6_NYACGCNTSANYGNNYN_eDBD",
     "sr": "metacluster_131.7.flyfactorsurvey__sr_SOLEXA_5_FBgn0003499",
     # The database holds two Onecut motifs. Use the CGATCGATA one, which is the
     # cut-homeobox site shown in Figure 4. The flyfactorsurvey entry
