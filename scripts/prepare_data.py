@@ -24,7 +24,8 @@ Note on normalisation, which differs between the two files:
   `expm1` gives exactly 10,000 per cell, and dividing by the smallest nonzero
   value per cell returns whole numbers. Do not normalise it again.
 - `larval_brain.h5ad` holds **raw integer counts**, per-cell totals between
-  2,015 and 43,644. It does need normalising before use.
+  2,015 and 43,644. It does need normalising before use, which `load_larval`
+  below does, because Practical 5 no longer explains normalisation.
 
 Run once:
 
@@ -192,6 +193,30 @@ def make_larval_h5ad(overwrite: bool = False) -> Path:
     print(f"  wrote {LARVAL_DEST} ({LARVAL_DEST.stat().st_size / 1e6:.0f} MB), "
           f"shape {adata.shape}")
     return LARVAL_DEST
+
+
+def load_larval():
+    """Read the larval brain file, keep the annotated cells, and make the values
+    comparable between cells.
+
+    Practical 5 does not teach normalisation, so this is done here rather than in
+    the notebook. It cannot be done in `make_larval_h5ad`, because that function
+    is skipped whenever the prepared file comes from the mirror. The check below
+    is what makes it safe to call either way: the file as published holds raw
+    integer counts, so if the values are no longer integers the work has already
+    been done and doing it twice would distort the data.
+    """
+    import scanpy as sc
+
+    make_larval_h5ad()
+    larval = sc.read_h5ad(LARVAL_DEST)
+    larval = larval[larval.obs["is_annotated"]].copy()
+
+    sample = larval.X.data[:5000]
+    if np.allclose(sample, np.round(sample)):
+        sc.pp.normalize_total(larval, target_sum=1e4)
+        sc.pp.log1p(larval)
+    return larval
 
 
 if __name__ == "__main__":
